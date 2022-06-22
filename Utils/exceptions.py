@@ -1,10 +1,13 @@
-class MultiRigidbodyError(Exception): pass
+class MultiRigidbodyException(Exception): pass
 
 
-class InvalidComponentError(Exception): pass
+class InvalidComponentException(Exception): pass
 
 
-class InvalidHierarchyError(Exception): pass
+class InvalidHierarchyException(Exception): pass
 
 
-class ResourceNotFoundError(Exception): pass
+class ResourceNotFoundException(Exception): pass
+
+
+class AccessException(Exception): pass

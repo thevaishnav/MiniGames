@@ -1,21 +1,23 @@
 from __future__ import annotations
+from MiniGames.Utils.type_checker import type_check, types_check
+
 import typing
 import pygame  # Only for rendering purposes
-
+from MiniGames.Utils import color as mod_color
 from MiniGames.Utils import settings_and_info as mod_sai
 from MiniGames.Utils import vector2 as mod_vec
-
+from MiniGames.Utils.decorators import inner_method
 if typing.TYPE_CHECKING:
     from MiniGames.Utils.vector2 import Vector2 as VectorAn
-    from MiniGames.Utils.color import Color
+    from MiniGames.Utils.color import Color as ColorAnot
 
 
 class Camera:
     __active: Camera = None
-
+    @inner_method
     def __init__(self, pos: VectorAn):
         Camera.__active = self
-        self.__pos = pos.FIX_SELF()
+        self.__pos = pos._fix_self()
         self.__pyPos = pos * mod_sai.Settings.space_scale
         pygame.init()
         self.__screen = pygame.display.set_mode([mod_sai.Settings.screen_width, mod_sai.Settings.screen_height])
@@ -23,7 +25,7 @@ class Camera:
         self.update = pygame.display.flip
 
     @staticmethod
-    def WAIT_IN_FRAME():
+    def _wait_in_frame():
         Camera.__active.__clock.tick(mod_sai.Settings.frame_rate)
 
     @staticmethod
@@ -36,8 +38,9 @@ class Camera:
 
     @position.setter
     def position(self, value: VectorAn):
-        self.__pos = value.FIX_SELF()
-        self.__pyPos = (value * mod_sai.Settings.space_scale * mod_vec.Vector2(1, -1)).FIX_SELF()
+        types_check("position", value, mod_vec.Vector2)
+        self.__pos = value._fix_self()
+        self.__pyPos = (value * mod_sai.Settings.space_scale * mod_vec.Vector2(1, -1))._fix_self()
 
     @staticmethod
     def screen_size() -> tuple[int, int]:
@@ -49,10 +52,11 @@ class Camera:
 
     @staticmethod
     def trans_point(point: VectorAn) -> tuple[float, float]:
+        types_check("point", point, mod_vec.Vector2)
         return point.x - Camera.__active.__pyPos.x, point.y - Camera.__active.__pyPos.y
 
     @staticmethod
-    def draw_line(start_point: VectorAn, end_point: VectorAn, color: Color, width: int = 4):
+    def _draw_line(start_point: VectorAn, end_point: VectorAn, color: ColorAnot, width: int = 4):
         pygame.draw.line(surface=Camera.__active.__screen,
                          color=color,
                          start_pos=Camera.trans_point(start_point),
@@ -60,15 +64,41 @@ class Camera:
                          width=width)
 
     @staticmethod
-    def draw_point(position: VectorAn, color: Color):
+    def _draw_point(position: VectorAn, color: ColorAnot):
         pygame.draw.circle(Camera.__active.__screen, color=color, center=Camera.trans_point(position), radius=5)
 
     @staticmethod
-    def draw_polygon(points: typing.Iterable[VectorAn], color: Color, edge_size: int = 4):
+    def _draw_polygon(points: typing.Iterable[VectorAn], color: ColorAnot, edge_size: int = 4):
         pts = [Camera.trans_point(pts) for pts in points]
         pygame.draw.polygon(Camera.__active.__screen, color, pts, edge_size)
 
-    def DRAW_GRID(self):
+    @staticmethod
+    def draw_line(start_point: VectorAn, end_point: VectorAn, color: ColorAnot, width: int = 4):
+        types_check("start_point", start_point, mod_vec.Vector2)
+        types_check("end_point", end_point, mod_vec.Vector2)
+        types_check("color", color, mod_color.Color)
+        type_check("width", width, int)
+        pygame.draw.line(surface=Camera.__active.__screen,
+                         color=color,
+                         start_pos=Camera.trans_point(start_point),
+                         end_pos=Camera.trans_point(end_point),
+                         width=width)
+
+    @staticmethod
+    def draw_point(position: VectorAn, color: ColorAnot):
+        types_check("position", position, mod_vec.Vector2)
+        types_check("color", color, mod_color.Color)
+        pygame.draw.circle(Camera.__active.__screen, color=color, center=Camera.trans_point(position), radius=5)
+
+    @staticmethod
+    def draw_polygon(points: typing.Iterable[VectorAn], color: ColorAnot, edge_size: int = 4):
+        types_check("points", points, typing.Iterable)
+        types_check("color", color, mod_color.Color)
+        type_check("edge_size", edge_size, int)
+        pts = [Camera.trans_point(pts) for pts in points]
+        pygame.draw.polygon(Camera.__active.__screen, color, pts, edge_size)
+
+    def _draw_grid(self):
         if not mod_sai.__draw_grid__:
             return
         scree_size = mod_sai.Settings.screen_size_pixels
@@ -95,4 +125,4 @@ class Camera:
 
     def clear_screen(self):
         self.__screen.fill(mod_sai.__background_color__)
-        self.DRAW_GRID()
+        self._draw_grid()

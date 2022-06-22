@@ -16,5 +16,4 @@ def types_check(name, var, *posib_types):
         if t is pos_typ: break
     else:
         ex = ", ".join(f"\'{t.__qualname__}\'" for t in posib_types[:-1])
-        raise TypeError(
-            f"Invalid type for {name}: Expected one of {ex} or \'{posib_types[-1].__qualname__}\' got \'{t.__qualname__}\'")
+        raise TypeError(f"Invalid type for {name}: Expected one of {ex} or \'{posib_types[-1].__qualname__}\' got \'{t.__qualname__}\'")

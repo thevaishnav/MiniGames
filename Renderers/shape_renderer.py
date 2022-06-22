@@ -1,10 +1,10 @@
 from __future__ import annotations
-
 import typing
-
+from MiniGames.Utils.type_checker import type_check
 from MiniGames.Renderers.renderer_base import RendererBase
-from MiniGames.Renderers.shapes import ShapeCircle
 from MiniGames.Pipeline.transform import __U2P__Point__
+from MiniGames.Pipeline import gameobject as mod_go
+from MiniGames.Renderers import shapes as mod_shapes
 
 if typing.TYPE_CHECKING:
     from MiniGames.Renderers.shapes import ShapeBase as ShapeBaseAnot
@@ -15,8 +15,8 @@ if typing.TYPE_CHECKING:
 class ShapeRenderer(RendererBase):
     def __init__(self, gameobject: GameObjectAnot):
         super(ShapeRenderer, self).__init__(gameobject)
-        self.__shape = ShapeCircle(1, 5)
-        self.__shape.SET_RENDERER(self)
+        self.__shape = mod_shapes.ShapeCircle(1, 5)
+        self.__shape._set_renderer(self)
 
     @property
     def shape(self) -> ShapeBaseAnot:
@@ -24,23 +24,27 @@ class ShapeRenderer(RendererBase):
 
     @shape.setter
     def shape(self, value: ShapeBaseAnot):
+        t = type(value)
+        if not issubclass(t, mod_shapes.ShapeBase):
+            raise TypeError(f"Invalid type for \'value\': Expected \'ShapeBase\' got \'{t.__qualname__}\'")
+
         if self.__shape:
             del self.__shape
         self.__shape = value
-        value.SET_RENDERER(self)
+        value._set_renderer(self)
 
-    def RecalculatePos(self): self.__shape.RecalculatePos()
+    def _recalculate_pos(self): self.__shape._recalculate_pos()
 
-    def RecalculateScale(self): self.__shape.RecalculateScale()
+    def _recalculate_scale(self): self.__shape._recalculate_scale()
 
-    def RecalculateRot(self): self.__shape.RecalculateRot()
+    def _recalculate_rot(self): self.__shape._recalculate_rot()
 
-    def Render(self): self.__shape.Render()
+    def _render(self): self.__shape._render()
 
     @property
-    def ABS_ROT(self) -> float:
+    def _absolute_rotation(self) -> float:
         return self.transform.rotation
 
     @property
-    def ABS_CENT(self) -> Vector2Anot:
+    def _absolute_center(self) -> Vector2Anot:
         return __U2P__Point__(self.transform.position)

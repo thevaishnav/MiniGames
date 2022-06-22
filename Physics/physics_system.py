@@ -2,6 +2,7 @@ from __future__ import annotations
 from MiniGames.Physics.gjk_implementation import are_colliding
 from MiniGames.Utils.settings_and_info import Info, Settings
 from MiniGames.Utils import settings_and_info as others
+from MiniGames.Utils.decorators import inner_method
 import threading
 import time
 from typing import TYPE_CHECKING
@@ -12,6 +13,7 @@ if TYPE_CHECKING:
 
 
 class PhysicsSystem:
+    @inner_method
     def __init__(self):
         self._rbs: list[RigidBodyAnot] = []
         self._cols: list[ColliderBaseAnot] = []
@@ -80,7 +82,7 @@ class PhysicsSystem:
             self._cols.remove(r)
         self._to_rem_col.clear()
 
-    def Loop_Colliders(self):
+    def loop_colliders(self):
         self._looping_col = True
         col_len = len(self._cols)
         for i in range(col_len - 1):
@@ -110,54 +112,54 @@ class PhysicsSystem:
         self.__remove_colliders()
         self._looping_col = False
 
-    def Loop_RBS(self):
+    def loop_rbs(self):
         self._looping_rbs = True
         for r in self._rbs:
             yield r
         self._looping_rbs = False
 
     def get_collision_id(self, col1: ColliderBaseAnot, col2: ColliderBaseAnot):
-        return (1 << col1.ID) | (1 << col2.ID)
+        return (1 << col1._col_id) | (1 << col2._col_id)
 
-    def COLLIDE_RBS(self, col1: ColliderBaseAnot, col2: ColliderBaseAnot):
+    def collide_rbs(self, col1: ColliderBaseAnot, col2: ColliderBaseAnot):
         r1 = col1.gameobject.rigid_body
         r2 = col2.gameobject.rigid_body
-        if r1 and r2: r1.CollideWith(r2)
+        if r1 and r2: r1._collide_with(r2)
 
-    def PROCESS_COLL1(self, col1: ColliderBaseAnot, col2: ColliderBaseAnot):
+    def process_collision(self, col1: ColliderBaseAnot, col2: ColliderBaseAnot):
         cid = self.get_collision_id(col1, col2)
 
         if cid in self.col_start or cid in self.col_stay:
             self.col_stay.add(cid)
             self.col_start.discard(cid)
             if col1.is_trigger or col2.is_trigger:
-                col1.gameobject.CallOnMonos_OTSt(col2)
-                col2.gameobject.CallOnMonos_OTSt(col1)
+                col1.gameobject._call_on_monos_on_tri_stay(col2)
+                col2.gameobject._call_on_monos_on_tri_stay(col1)
             else:
-                self.COLLIDE_RBS(col1, col2)
-                col1.gameobject.CallOnMonos_OCSt(col2)
-                col2.gameobject.CallOnMonos_OCSt(col1)
+                self.collide_rbs(col1, col2)
+                col1.gameobject._call_on_monos_on_col_stay(col2)
+                col2.gameobject._call_on_monos_on_col_stay(col1)
         else:
             self.col_start.add(cid)
             if col1.is_trigger or col2.is_trigger:
-                col1.gameobject.CallOnMonos_OTEn(col2)
-                col2.gameobject.CallOnMonos_OTEn(col1)
+                col1.gameobject._call_on_monos_on_tri_enter(col2)
+                col2.gameobject._call_on_monos_on_tri_enter(col1)
             else:
-                self.COLLIDE_RBS(col1, col2)
-                col1.gameobject.CallOnMonos_OCEn(col2)
-                col2.gameobject.CallOnMonos_OCEn(col1)
+                self.collide_rbs(col1, col2)
+                col1.gameobject._call_on_monos_on_col_enter(col2)
+                col2.gameobject._call_on_monos_on_col_enter(col1)
 
-    def PROCESS_COLL2(self, col1: ColliderBaseAnot, col2: ColliderBaseAnot):
+    def process_collision_2(self, col1: ColliderBaseAnot, col2: ColliderBaseAnot):
         cid = self.get_collision_id(col1, col2)
         if cid not in self.col_stay: return
 
         self.col_stay.remove(cid)
         if col1.is_trigger or col2.is_trigger:
-            col1.gameobject.CallOnMonos_OTEx(col2)
-            col2.gameobject.CallOnMonos_OTEx(col1)
+            col1.gameobject._call_on_monos_on_tri_exit(col2)
+            col2.gameobject._call_on_monos_on_tri_exit(col1)
         else:
-            col1.gameobject.CallOnMonos_OCEx(col2)
-            col2.gameobject.CallOnMonos_OCEx(col1)
+            col1.gameobject._call_on_monos_on_col_exit(col2)
+            col2.gameobject._call_on_monos_on_col_exit(col1)
 
     def start_physics_loop(self):
         if not self._rbs and not self._cols:
@@ -194,9 +196,9 @@ class PhysicsSystem:
                         pass
 
                 if are_colliding(col1, col2):
-                    self.PROCESS_COLL1(col1, col2)
+                    self.process_collision(col1, col2)
                 else:
-                    self.PROCESS_COLL2(col1, col2)
+                    self.process_collision_2(col1, col2)
             except StopIteration:
                 break
 
@@ -205,9 +207,9 @@ class PhysicsSystem:
             try:
                 col1, col2 = self.__col_iter.__next__()
                 if are_colliding(col1, col2):
-                    self.PROCESS_COLL1(col1, col2)
+                    self.process_collision(col1, col2)
                 else:
-                    self.PROCESS_COLL2(col1, col2)
+                    self.process_collision_2(col1, col2)
             except StopIteration:
                 break
 
@@ -215,12 +217,12 @@ class PhysicsSystem:
         self.__is_psy_loop_running = True
         while Info.is_loop_running:
             now = time.perf_counter()
-            Info.instance.CallPhysicsUpdate()
+            Info.instance._call_physics_update()
 
-            self.__col_iter = self.Loop_Colliders()
+            self.__col_iter = self.loop_colliders()
             self.__collision_det_func()
 
-            for rb in self.Loop_RBS():
+            for rb in self.loop_rbs():
                 rb.physics_update()
 
             others.__fixedDeltaTime__ = time.perf_counter() - now

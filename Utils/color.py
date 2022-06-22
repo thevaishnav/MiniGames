@@ -1,4 +1,6 @@
 from __future__ import annotations
+from MiniGames.Utils.type_checker import types_check, type_check_num
+
 from pygame.color import Color as pyColor
 
 
@@ -10,67 +12,71 @@ class Color(pyColor):
         return f"Color({self.r}, {self.g}, {self.b}, {self.a})"
 
     def __mul__(self, other: Color | int | float) -> Color:
+        types_check("other", other, Color, int, float)
         if type(other) is Color: return super(Color, self).__mul__(other)
         if type(other) is int: return Color(self.r * other, self.g * other, self.b * other, self.a * other)
         if type(other) is float: return Color(int(self.r * other), int(self.g * other), int(self.b * other), int(self.a * other))
         raise TypeError(f"unsupported operand type(s) for *: {type(other)} and 'Color'")
 
     @staticmethod
-    def Lerp(c1: Color, c2: Color, t: float) -> Color:
+    def lerp(c1: Color, c2: Color, t: float) -> Color:
+        types_check("c1", c1, Color)
+        types_check("c2", c2, Color)
+        type_check_num("t", t)
         t1 = max(0.0, min(1.0, t))
         return (c2 * (1 - t1)) + (c1 * t1)
 
     @staticmethod
-    def White() -> Color: return Color(255, 255, 255)
+    def white() -> Color: return Color(255, 255, 255)
 
     @staticmethod
-    def Black() -> Color: return Color(0, 0, 0)
+    def black() -> Color: return Color(0, 0, 0)
 
     @staticmethod
-    def Clear() -> Color: return Color(0, 0, 0, 0)
+    def clear() -> Color: return Color(0, 0, 0, 0)
 
     @staticmethod
-    def Maroon() -> Color:  return Color(128, 0, 0)
+    def maroon() -> Color:  return Color(128, 0, 0)
 
     @staticmethod
-    def Red() -> Color:     return Color(255, 0, 0)
+    def red() -> Color:     return Color(255, 0, 0)
 
     @staticmethod
-    def Orange() -> Color:  return Color(255, 165, 0)
+    def orange() -> Color:  return Color(255, 165, 0)
 
     @staticmethod
-    def Yellow() -> Color:  return Color(255, 255, 0)
+    def yellow() -> Color:  return Color(255, 255, 0)
 
     @staticmethod
-    def Olive() -> Color:   return Color(128, 128, 0)
+    def olive() -> Color:   return Color(128, 128, 0)
 
     @staticmethod
-    def Green() -> Color:   return Color(0, 128, 0)
+    def green() -> Color:   return Color(0, 128, 0)
 
     @staticmethod
-    def Collider_Green() -> Color:
+    def collider_green() -> Color:
         return Color(0, 255, 0)
 
     @staticmethod
-    def Purple() -> Color:  return Color(128, 0, 128)
+    def purple() -> Color:  return Color(128, 0, 128)
 
     @staticmethod
-    def Fuchsia() -> Color: return Color(255, 0, 255)
+    def fuchsia() -> Color: return Color(255, 0, 255)
 
     @staticmethod
-    def Teal() -> Color:    return Color(0, 128, 128)
+    def teal() -> Color:    return Color(0, 128, 128)
 
     @staticmethod
-    def Aqua() -> Color:    return Color(0, 255, 255)
+    def aqua() -> Color:    return Color(0, 255, 255)
 
     @staticmethod
-    def Blue() -> Color:    return Color(0, 0, 255)
+    def blue() -> Color:    return Color(0, 0, 255)
 
     @staticmethod
-    def Navy() -> Color:    return Color(0, 0, 128)
+    def navy() -> Color:    return Color(0, 0, 128)
 
     @staticmethod
-    def Gold() -> Color:    return Color(255, 215, 0)
+    def gold() -> Color:    return Color(255, 215, 0)
 
     @staticmethod
-    def Cyan() -> Color:    return Color(0, 255, 255)
+    def cyan() -> Color:    return Color(0, 255, 255)

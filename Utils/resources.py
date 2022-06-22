@@ -1,5 +1,7 @@
+from MiniGames.Utils.type_checker import type_check
+
 from MiniGames.Pipeline.application import resources_path
-from MiniGames.Utils.exceptions import ResourceNotFoundError
+from MiniGames.Utils.exceptions import ResourceNotFoundException
 import pygame
 import os
 
@@ -17,12 +19,15 @@ class Sprite:
 class Resources:
     @staticmethod
     def get_sprite(nick_name: str) -> Sprite:
+        type_check("nick_name", nick_name, str)
         nn = nick_name.lower()
         if nn in all_res: return all_res[nn]
-        raise ResourceNotFoundError(f"Resource nicknamed {nick_name} not found. Did you load it?")
+        raise ResourceNotFoundException(f"Resource nicknamed {nick_name} not found. Did you load it?")
 
     @staticmethod
     def load_sprite(nick_name: str, path: str) -> Sprite:
+        type_check("nick_name", nick_name, str)
+        type_check("path", path, str)
         if not os.path.isfile(path): raise FileNotFoundError("Given path is not a file")
 
         sp = Sprite()

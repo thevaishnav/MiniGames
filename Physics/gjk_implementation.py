@@ -1,3 +1,4 @@
+
 from MiniGames.Utils.vector2 import Vector2
 from MiniGames.Physics.collider_base import ColliderBase
 

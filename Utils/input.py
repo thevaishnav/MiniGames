@@ -1,3 +1,5 @@
+from MiniGames.Utils.type_checker import type_check
+
 import pygame
 from enum import Enum
 
@@ -159,7 +161,7 @@ class InputClass:
         self.__kUp = set()
         self.SHOULD_QUIT = False
 
-    def InUpdate(self):
+    def _in_update(self):
         self.__mHold.update(self.__mDown)
         self.__mUp.clear()
         self.__mDown.clear()
@@ -185,6 +187,7 @@ class InputClass:
                 self.__mDown.add(ev.button)
 
     def get_mouse_down(self, button: int) -> bool:
+        type_check("button", button, int)
         """
         :param button: 1 = left_mouse_button, 2 = middle_mouse_button, 3 = right_mouse_button
         :return: True if specified mouse button was pressed in this frame, else False
@@ -192,6 +195,7 @@ class InputClass:
         return button in self.__mDown
 
     def get_mouse_up(self, button: int) -> bool:
+        type_check("button", button, int)
         """
         :param button: 1 = left_mouse_button, 2 = middle_mouse_button, 3 = right_mouse_button
         :return: True if specified mouse button was released in this frame, else False
@@ -199,6 +203,7 @@ class InputClass:
         return button in self.__mUp
 
     def get_mouse_hold(self, button: int) -> bool:
+        type_check("button", button, int)
         """
         :param button: 1 = left_mouse_button, 2 = middle_mouse_button, 3 = right_mouse_button
         :return: True if specified mouse button is held down in this frame, else False
@@ -206,6 +211,7 @@ class InputClass:
         return button in self.__mHold
 
     def get_key_down(self, code: Keycodes) -> bool:
+        type_check("code", code, Keycodes)
         """
         :param code: enum-value of enum Keycodes
         :return: True if specified keyboard button was pressed in this frame, else False
@@ -213,6 +219,7 @@ class InputClass:
         return int(code.value) in self.__kDown
 
     def get_key_up(self, code: Keycodes) -> bool:
+        type_check("code", code, Keycodes)
         """
         :param code: enum-value of enum Keycodes
         :return: True if specified mouse button was released in this frame, else False
@@ -220,6 +227,7 @@ class InputClass:
         return int(code.value) in self.__kUp
 
     def get_key_hold(self, code: Keycodes) -> bool:
+        type_check("code", code, Keycodes)
         """
         :param code: enum-value of enum Keycodes
         :return: True if specified mouse button is held down in this frame, else False
@@ -233,7 +241,6 @@ class InputClass:
         evs = pygame.event.get(pygame.MOUSEWHEEL)
         if evs: return evs[0].y
         return 0
-
 
 
 Input = InputClass()

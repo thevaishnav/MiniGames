@@ -1,11 +1,11 @@
 from __future__ import annotations
-
 import MiniGames.Utils.settings_and_info as others
 from MiniGames.Utils.vector2 import Vector2
 from MiniGames.Utils.input import Input
 from MiniGames.Physics.physics_system import PhysicsSystem
 from MiniGames.Pipeline.camera import Camera
 from MiniGames.Pipeline.storages import AppStorage
+from MiniGames.Utils import decorators
 import os
 import time
 import os.path as path
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 
 class Application:
+    @decorators.inner_method
     def __init__(self):
         print("Starting Game", end=" - ")
 
@@ -39,66 +40,68 @@ class Application:
 
         self.__has_been_runned = True
 
-        for go in self.__Storage.Loop_GOs():
-            go.OnGameStart()
+        for go in self.__Storage.loop_gos():
+            go._on_go_start()
 
-        for go in self.__Storage.Loop_GOs():
-            go.CallOnMonos("start")
+        for go in self.__Storage.loop_gos():
+            go._call_on_monos("start")
 
         try:
             self.__is_loop_running = True
             # self.__phy_sym.start_physics_loop()
-            self.RenderLoop()
+            self._render_loop()
         except KeyboardInterrupt:
             stop_game()
 
-    def CallPhysicsUpdate(self):
-        for go in self.__Storage.Loop_GOs():
-            go.CALL_PHYSICS_UPDATE()
+    def _call_physics_update(self):
+        for go in self.__Storage.loop_gos():
+            go._call_physics_update()
 
-    def RenderLoop(self):
+    def _render_loop(self):
         while self.__is_loop_running:
             now = time.perf_counter()
-            Input.InUpdate()
+            Input._in_update()
             if Input.SHOULD_QUIT:
                 stop_game()
                 break
 
-            others.Info.UPDATE_TIME()
+            others.Info._update_time()
             self.__camera.clear_screen()
 
-            for go in self.__Storage.Loop_GOs():
-                go.GOUpdate()
+            for go in self.__Storage.loop_gos():
+                go._go_update()
 
             self.__camera.update()
-            Camera.WAIT_IN_FRAME()
+            Camera._wait_in_frame()
             others.__deltaTime__ = time.perf_counter() - now
 
-        for go in self.__Storage.Loop_GOs():
+        for go in self.__Storage.loop_gos():
             go.destroy()
 
-    def AddToActiveGameObjects(self, go: GameObject):
+    def _add_to_active_game_objects(self, go: GameObject):
         self.__Storage.add_to_gos(go)
 
-    def RemFrActiveGameObjects(self, go: GameObject):
+    def _rem_from_active_game_objects(self, go: GameObject):
         self.__Storage.rem_from_gos(go)
 
-    def AddToRBs(self, rb: RigidBody):
+    def _add_to_rbs(self, rb: RigidBody):
         self.__phy_sym.add_rb(rb)
 
-    def RemFrRBs(self, rb: RigidBody):
+    def _rem_from_rbs(self, rb: RigidBody):
         self.__phy_sym.rem_rb(rb)
 
-    def AddToActiveColliders(self, go: GameObject):
+    def _add_to_active_colliders(self, go: GameObject):
         self.__phy_sym.add_col(go)
 
-    def RemFrActiveColliders(self, go: GameObject):
+    def _rem_from_active_colliders(self, go: GameObject):
         self.__phy_sym.rem_col(go)
 
 
-
-
-def init(): return Application()
+def init():
+    decorators.__IS_HIDDEN__ = False
+    app = Application()
+    decorators.__IS_HIDDEN__ = True
+    return app
 
 
 def run():

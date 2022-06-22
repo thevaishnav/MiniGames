@@ -1,4 +1,6 @@
 from __future__ import annotations
+from MiniGames.Utils.type_checker import type_check, types_check
+from MiniGames.Utils.decorators import inner_method
 from MiniGames.Utils.vector2 import Vector2
 from MiniGames.Utils.settings_and_info import Info, Settings
 from typing import TYPE_CHECKING
@@ -10,7 +12,7 @@ if TYPE_CHECKING:
 
 class ColliderBase:
     __COL_ID = 1
-
+    @inner_method
     def __init__(self, go: GameObject):
         self.__go = go
         self.__is_enabled = True
@@ -24,10 +26,11 @@ class ColliderBase:
 
     @is_trigger.setter
     def is_trigger(self, value: bool):
+        type_check("is_trigger", value, bool)
         self.__is_trigger = value
 
     @property
-    def ID(self) -> int:
+    def _col_id(self) -> int:
         return self.__id
 
     @property
@@ -36,11 +39,12 @@ class ColliderBase:
 
     @enabled.setter
     def enabled(self, value: bool):
+        type_check("enabled", value, bool)
         if value == self.__is_enabled: return
         if value:
-            Info.instance.AddToActiveColliders(self)
+            Info.instance._add_to_active_colliders(self)
         else:
-            Info.instance.RemFrActiveColliders(self)
+            Info.instance._rem_from_active_colliders(self)
         self.__is_enabled = value
 
     @property
@@ -52,7 +56,7 @@ class ColliderBase:
         return self.__go.transform
 
     def remove(self) -> None:
-        Info.instance.RemFrActiveColliders(self)
+        Info.instance._rem_from_active_colliders(self)
         del self
 
     def absolute_center_in_pixels(self) -> Vector2:

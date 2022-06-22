@@ -1,6 +1,7 @@
 from __future__ import annotations
 import typing, collections
 from MiniGames.Utils.settings_and_info import Info
+from MiniGames.Utils.decorators import inner_method
 if typing.TYPE_CHECKING:
     from MiniGames.Pipeline.gameobject import GameObject
     from MiniGames.Pipeline.monobehaviour import MonoBehaviour
@@ -9,6 +10,7 @@ if typing.TYPE_CHECKING:
 
 
 class GameObjectsStorage:
+    @inner_method
     def __init__(self):
         self.all_monos: dict[str: list[MonoBehaviour]] = {}
 
@@ -27,7 +29,7 @@ class GameObjectsStorage:
         self.to_add: dict[str: list[MonoBehaviour]] = {}
         self.rem_fr: dict[str: list[MonoBehaviour]] = {}
 
-    def Loop(self, code: str) -> collections.Iterable[MonoBehaviour]:
+    def loop(self, code: str) -> collections.Iterable[MonoBehaviour]:
         self.to_add[code] = []
         self.rem_fr[code] = []
 
@@ -47,7 +49,7 @@ class GameObjectsStorage:
         self.rem_fr.pop(code)
         self.to_add.pop(code)
 
-    def LoopAll(self) -> collections.Iterable[MonoBehaviour]:
+    def loop_all(self) -> collections.Iterable[MonoBehaviour]:
         self.to_add["all"] = []
         self.rem_fr["all"] = []
 
@@ -100,7 +102,7 @@ class GameObjectsStorage:
         else:
             self.rem_fr[code].append(obj)
 
-    def RMFRAL(self, obj):
+    def remove_from_all(self, obj):
         if "all" not in self.rem_fr:
             qname = type(obj).__qualname__
             if qname in self.all_monos:
@@ -110,7 +112,7 @@ class GameObjectsStorage:
 
     def rem_from_all(self, obj):
         try:
-            self.RMFRAL(obj)
+            self.remove_from_all(obj)
         except ValueError:
             pass
 
@@ -124,7 +126,7 @@ class GameObjectsStorage:
             return self.all_monos[_t.__class__]
         return None
 
-    def HandleCour(self):
+    def handle_courotines(self):
         if len(self.cour) == 0: return
         to_pop = []
         for itr in self.cour:
@@ -139,13 +141,14 @@ class GameObjectsStorage:
 
 
 class AppStorage:
+    @inner_method
     def __init__(self):
         self._active_gos = set()
         self._to_add_gos = []
         self._to_rem_gos = []
         self._looping_gos = False
 
-    def Loop_GOs(self) -> typing.Iterable[GameObject]:
+    def loop_gos(self) -> typing.Iterable[GameObject]:
         self._looping_gos = True
 
         for i in self._active_gos:
@@ -179,6 +182,7 @@ class AppStorage:
 
 
 class LayeredStorage:
+    @inner_method
     def __init__(self):
         self.__inner = {}
         self.__all_layers = []

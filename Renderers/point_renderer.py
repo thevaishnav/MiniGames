@@ -1,3 +1,5 @@
+from MiniGames.Utils.type_checker import type_check
+
 from MiniGames.Renderers.renderer_base import RendererBase
 from MiniGames.Utils.vector2 import Vector2
 from MiniGames.Pipeline.transform import __U2P__Point__
@@ -10,9 +12,9 @@ class PointRenderer(RendererBase):
         super(PointRenderer, self).__init__(gameobject)
         self.__pPos = Vector2()
 
-    def RecalculatePos(self): self.__pPos = __U2P__Point__(self.transform.position)
-    def RecalculateRot(self): pass
-    def RecalculateScale(self): pass
+    def _recalculate_pos(self): self.__pPos = __U2P__Point__(self.transform.position)
+    def _recalculate_rot(self): pass
+    def _recalculate_scale(self): pass
 
-    def Render(self):
-        Camera.draw_point(self.__pPos, self.color)
+    def _render(self):
+        Camera._draw_point(self.__pPos, self.color)

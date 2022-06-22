@@ -1,4 +1,5 @@
 from __future__ import annotations
+from MiniGames.Utils.type_checker import type_check, type_check_num, types_check
 import typing
 import pygame  # Only for rendering purposes
 from MiniGames.Utils.settings_and_info import Settings
@@ -11,11 +12,11 @@ if typing.TYPE_CHECKING:
 
 
 class ShapeBase:
-    def __init__(self, edge_size: int=5):
+    def __init__(self, edge_size: int = 5):
         self.__edge_size = edge_size
         self._rend: ShapeRendAnot = None
 
-    def SET_RENDERER(self, rend: ShapeRendAnot):
+    def _set_renderer(self, rend: ShapeRendAnot):
         self._rend = rend
 
     @property
@@ -24,17 +25,16 @@ class ShapeBase:
 
     @edge_size.setter
     def edge_size(self, value: int):
+        type_check("edge_size", value, int)
         self.__edge_size = value
 
-    def Initialize(self): raise NotImplementedError()
+    def _recalculate_pos(self): raise NotImplementedError()
 
-    def RecalculatePos(self): raise NotImplementedError()
+    def _recalculate_scale(self): raise NotImplementedError()
 
-    def RecalculateScale(self): raise NotImplementedError()
+    def _recalculate_rot(self): raise NotImplementedError()
 
-    def RecalculateRot(self): raise NotImplementedError()
-
-    def Render(self): raise NotImplementedError()
+    def _render(self): raise NotImplementedError()
 
 
 class ShapeCircle(ShapeBase):
@@ -52,26 +52,27 @@ class ShapeCircle(ShapeBase):
 
     @radius.setter
     def radius(self, value: float):
+        type_check_num("radius", value)
         self.__radius = value
-        self.RecalculateScale()
+        self._recalculate_scale()
 
-    def RecalculatePos(self):
+    def _recalculate_pos(self):
         if self.__surf is None:
-            self.RecalculateScale()
+            self._recalculate_scale()
             return
 
-        ppos = self._rend.ABS_CENT
+        ppos = self._rend._absolute_center
         rc = self.__surf.get_rect().center
         self.__pCenter = Vector2(ppos.x - rc[0], ppos.y - rc[1])
 
-    def RecalculateRot(self):
+    def _recalculate_rot(self):
         if self.__raw_surf is None:
-            self.RecalculateScale()
+            self._recalculate_scale()
             return
-        self.__surf = pygame.transform.rotate(self.__raw_surf, self._rend.ABS_ROT)
-        self.RecalculatePos()
+        self.__surf = pygame.transform.rotate(self.__raw_surf, self._rend._absolute_rotation)
+        self._recalculate_pos()
 
-    def RecalculateScale(self):
+    def _recalculate_scale(self):
         # Scale
         trans = self._rend.transform
         sc = self.__radius * trans.lossy_scale * Settings.space_scale
@@ -79,10 +80,10 @@ class ShapeCircle(ShapeBase):
         self.__raw_surf = pygame.surface.Surface(rect.size, pygame.SRCALPHA)
 
         pygame.draw.ellipse(surface=self.__raw_surf, color=self._rend.color, rect=rect, width=self.edge_size)
-        self.RecalculateRot()
+        self._recalculate_rot()
 
-    def Render(self):
-        if self.__surf is None: self.RecalculateScale()
+    def _render(self):
+        if self.__surf is None: self._recalculate_scale()
         Camera.put(self.__surf, self.__pCenter)
 
 
@@ -93,7 +94,7 @@ class ShapeArrow(ShapeBase):
         self.__end_pt = end_pt
         self.__py_start = __U2P__Point__(self.__start_pt)
         self.__py_end = __U2P__Point__(self.__end_pt)
-        self.__tri_points = self.GET_TRI_POINTS()
+        self.__tri_points = self._gr_three_points()
 
     @property
     def start_point(self) -> Vector2:
@@ -101,9 +102,10 @@ class ShapeArrow(ShapeBase):
 
     @start_point.setter
     def start_point(self, value: Vector2):
+        types_check("start_point", value, Vector2)
         self.__start_pt = value
         self.__py_start = __U2P__Point__(self.__start_pt)
-        self.__tri_points = self.GET_TRI_POINTS()
+        self.__tri_points = self._gr_three_points()
 
     @property
     def end_point(self) -> Vector2:
@@ -111,11 +113,12 @@ class ShapeArrow(ShapeBase):
 
     @end_point.setter
     def end_point(self, value: Vector2):
+        types_check("end_point", value, Vector2)
         self.__end_pt = value
         self.__py_end = __U2P__Point__(self.__end_pt)
-        self.__tri_points = self.GET_TRI_POINTS()
+        self.__tri_points = self._gr_three_points()
 
-    def GET_TRI_POINTS(self):
+    def _gr_three_points(self):
         p2 = (self.__start_pt - self.__end_pt) * 0.1
         p3 = p2.copy() + self.__end_pt
         p2.rotate_self(90)
@@ -123,17 +126,15 @@ class ShapeArrow(ShapeBase):
         p3Fin = __U2P__Point__(p3 - p2)
         return self.__py_end, p2Fin, p3Fin
 
-    def RecalculateSelf(self): pass
+    def _recalculate_pos(self): pass
 
-    def RecalculatePos(self): pass
+    def _recalculate_scale(self): pass
 
-    def RecalculateScale(self): pass
+    def _recalculate_rot(self): pass
 
-    def RecalculateRot(self): pass
-
-    def Render(self):
-        Camera.draw_line(self.__py_start, self.__py_end, self._rend.color, self.edge_size)
-        Camera.draw_polygon(self.__tri_points, self._rend.color, edge_size=0)
+    def _render(self):
+        Camera._draw_line(self.__py_start, self.__py_end, self._rend.color, self.edge_size)
+        Camera._draw_polygon(self.__tri_points, self._rend.color, edge_size=0)
 
 
 class ShapeBox(ShapeBase):
@@ -148,24 +149,24 @@ class ShapeBox(ShapeBase):
         self.__raw_surf = None
         self.__pyCent = Vector2.zero()
 
-    def RecalculatePos(self):
+    def _recalculate_pos(self):
         if self.__surf is None:
-            self.RecalculateScale()
+            self._recalculate_scale()
             return
 
         r = self.__surf.get_rect().center
-        c = self._rend.ABS_CENT
+        c = self._rend._absolute_center
         self.__pyCent = Vector2(c.x - r[0], c.y - r[1])
 
-    def RecalculateRot(self):
+    def _recalculate_rot(self):
         if self.__raw_surf is None:
-            self.RecalculateScale()
+            self._recalculate_scale()
             return
 
-        self.__surf = pygame.transform.rotate(self.__raw_surf, self._rend.ABS_ROT)
-        self.RecalculatePos()
+        self.__surf = pygame.transform.rotate(self.__raw_surf, self._rend._absolute_rotation)
+        self._recalculate_pos()
 
-    def RecalculateScale(self):
+    def _recalculate_scale(self):
         py_size = (self.__size * self._rend.transform.lossy_scale * Settings.space_scale).__call__()
         rect = pygame.Rect((0, 0), py_size)
         self.__raw_surf = pygame.surface.Surface(py_size, pygame.SRCALPHA)
@@ -179,11 +180,11 @@ class ShapeBox(ShapeBase):
                          border_bottom_right_radius=self.__redii_br,
                          border_bottom_left_radius=self.__redii_bl
                          )
-        self.RecalculateRot()
+        self._recalculate_rot()
 
-    def Render(self):
+    def _render(self):
         if self.__surf is None:
-            self.RecalculateScale()
+            self._recalculate_scale()
         Camera.put(self.__surf, self.__pyCent)
 
     @property
@@ -192,8 +193,9 @@ class ShapeBox(ShapeBase):
 
     @size.setter
     def size(self, value: Vector2):
+        types_check("size", value, Vector2)
         self.__size = value
-        self.RecalculateScale()
+        self._recalculate_scale()
 
     @property
     def redii_tl(self) -> int:
@@ -201,6 +203,7 @@ class ShapeBox(ShapeBase):
 
     @redii_tl.setter
     def redii_tl(self, value: int):
+        type_check("redii_tl", value, int)
         self.__redii_tl = value
 
     @property
@@ -209,6 +212,7 @@ class ShapeBox(ShapeBase):
 
     @redii_tr.setter
     def redii_tr(self, value: int):
+        type_check("redii_tr", value, int)
         self.__redii_tr = value
 
     @property
@@ -217,6 +221,7 @@ class ShapeBox(ShapeBase):
 
     @redii_bl.setter
     def redii_bl(self, value: int):
+        type_check("redii_bl", value, int)
         self.__redii_bl = value
 
     @property
@@ -225,4 +230,5 @@ class ShapeBox(ShapeBase):
 
     @redii_br.setter
     def redii_br(self, value: int):
+        type_check("redii_br", value, int)
         self.__redii_br = value

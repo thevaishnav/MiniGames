@@ -1,21 +1,26 @@
 from __future__ import annotations
-from MiniGames.Pipeline.monobehaviour import MonoBehaviour
+from MiniGames.Utils.type_checker import type_check
+from MiniGames.Utils import decorators
+from MiniGames.Pipeline import monobehaviour as mod_mono
 from MiniGames.Pipeline.transform import Transform
 from MiniGames.Pipeline.coroutines import WaitFor
 from MiniGames.Pipeline.storages import GameObjectsStorage
 from MiniGames.Physics.collider_base import ColliderBase
 from MiniGames.Physics.rigidbody import RigidBody
 from MiniGames.Utils.settings_and_info import Info, Settings
-from MiniGames.Utils.exceptions import InvalidComponentError
-from MiniGames.Utils.exceptions import MultiRigidbodyError
+from MiniGames.Utils.exceptions import InvalidComponentException
+from MiniGames.Utils.exceptions import MultiRigidbodyException
+from MiniGames.Utils import decorators
 
 import typing
 if typing.TYPE_CHECKING:
     from MiniGames.Renderers.renderer_base import RendererBaseAnot
+    from MiniGames.Pipeline.monobehaviour import MonoBehaviour as MonoAnot
 
 
 class GameObject:
     def __init__(self, name: str):
+        type_check("name", name, str)
         if not Info.has_been_init():
             raise BrokenPipeError("Too early to create a Game Object. Must call \"App.init\" first")
         self.__rb = None
@@ -23,11 +28,13 @@ class GameObject:
         self.__transform = Transform(self)
         self.__is_active = False
         self.__activate_on_start = True
+        decorators.__IS_HIDDEN__ = False
         self.__Storage = GameObjectsStorage()
+        decorators.__IS_HIDDEN__ = True
         self.__activate_when_parent_does = True
-        Info.instance.AddToActiveGameObjects(self)
+        Info.instance._add_to_active_game_objects(self)
         if Info.is_loop_running:
-            self.OnGameStart()
+            self._on_go_start()
 
     @property
     def gameobject(self) -> GameObject:
@@ -37,86 +44,86 @@ class GameObject:
     def transform(self) -> Transform:
         return self.__transform
 
-    def OnGameStart(self):
+    def _on_go_start(self):
         if not self.__activate_on_start: return
 
-        for mono in self.__Storage.LoopAll():
-            mono.OnGameStartMono()
+        for mono in self.__Storage.loop_all():
+            mono._on_game_start_mono()
         self.__is_active = True
 
-    def SETRB(self, rb: RigidBody):
+    def _set_rb(self, rb: RigidBody):
         if self.__rb is not None: return False
         self.__rb = rb
         return True
 
-    def AddTo(self, code: str, mono: MonoBehaviour or ColliderBase or RendererBaseAnot):
+    def _set_to(self, code: str, mono: MonoAnot or ColliderBase or RendererBaseAnot):
         self.__Storage.add_to(code, mono)
 
-    def RemoveFrom(self, code: str, mono: MonoBehaviour):
+    def _remove_from(self, code: str, mono: MonoAnot):
         self.__Storage.rem_from(code, mono)
 
-    def AddToMultiple(self, mono: MonoBehaviour, *codes):
+    def _add_to_multiple(self, mono: MonoAnot, *codes):
         for code in codes:
             self.__Storage.add_to(code, mono)
 
-    def RemoveFromMultiple(self, mono: MonoBehaviour, *codes):
+    def _remove_from_multiple(self, mono: MonoAnot, *codes):
         for code in codes:
             self.__Storage.rem_from(code, mono)
 
-    def PARENT_ACTIVATED(self):
+    def _parent_activated(self):
         self.__is_active = self.__activate_when_parent_does
-        self.CallOnMonos("on_enabled")
+        self._call_on_monos("on_enabled")
         for child in self.__transform:
-            child.gameobject.PARENT_ACTIVATED()
+            child.gameobject._parent_activated()
 
-    def PARENT_DEACTIVATED(self):
+    def _parent_deactivated(self):
         self.__activate_when_parent_does = bool(self.__is_active)
         self.__is_active = False
-        self.CallOnMonos("on_disabled")
+        self._call_on_monos("on_disabled")
         for child in self.__transform:
-            child.gameobject.PARENT_ACTIVATED()
+            child.gameobject._parent_activated()
 
-    def GOUpdate(self):
-        for mono in self.__Storage.Loop("u"): mono.update()
-        for mono in self.__Storage.Loop("lu"): mono.late_update()
-        for rend in self.__Storage.Loop("r"): rend.Render()
-        self.__Storage.HandleCour()
+    def _go_update(self):
+        for mono in self.__Storage.loop("u"): mono.update()
+        for mono in self.__Storage.loop("lu"): mono.late_update()
+        for rend in self.__Storage.loop("r"): rend._render()
+        self.__Storage.handle_courotines()
         if not Settings.draw_colliders: return
 
-        for rend in self.__Storage.Loop("hidden_rend"):
-            rend.Render()
+        for rend in self.__Storage.loop("hidden_rend"):
+            rend._render()
 
-    def CallOnMonos(self, to_call: str):
+    def _call_on_monos(self, to_call: str):
         if not self.__is_active: return
-        for mono in self.__Storage.LoopAll():
-            mono.Call(to_call)
+        for mono in self.__Storage.loop_all():
+            mono._call(to_call)
 
-    def CallOnMonos_OCEn(self, other: ColliderBase):
-        for go in self.__Storage.Loop("oci"):
+    def _call_on_monos_on_col_enter(self, other: ColliderBase):
+        for go in self.__Storage.loop("oci"):
             go.on_collision_enter(other)
 
-    def CallOnMonos_OCEx(self, other: ColliderBase):
-        for go in self.__Storage.Loop("oco"):
+    def _call_on_monos_on_col_exit(self, other: ColliderBase):
+        for go in self.__Storage.loop("oco"):
             go.on_collision_exit(other)
 
-    def CallOnMonos_OCSt(self, other: ColliderBase):
-        for go in self.__Storage.Loop("ocs"):
+    def _call_on_monos_on_col_stay(self, other: ColliderBase):
+        for go in self.__Storage.loop("ocs"):
             go.on_collision_stay(other)
 
-    def CallOnMonos_OTEn(self, other: ColliderBase):
-        for go in self.__Storage.Loop("ocs"):
+    def _call_on_monos_on_tri_enter(self, other: ColliderBase):
+        for go in self.__Storage.loop("ocs"):
             go.on_trigger_enter(other)
 
-    def CallOnMonos_OTEx(self, other: ColliderBase):
-        for go in self.__Storage.Loop("ocs"):
+    def _call_on_monos_on_tri_exit(self, other: ColliderBase):
+        for go in self.__Storage.loop("ocs"):
             go.on_trigger_exit(other)
 
-    def CallOnMonos_OTSt(self, other: ColliderBase):
-        for go in self.__Storage.Loop("ocs"):
+    def _call_on_monos_on_tri_stay(self, other: ColliderBase):
+        for go in self.__Storage.loop("ocs"):
             go.on_trigger_stay(other)
 
-    def CALL_PHYSICS_UPDATE(self):
-        for mono in self.__Storage.Loop("fu"):
+    def _call_physics_update(self):
+        for mono in self.__Storage.loop("fu"):
             mono.fixed_update()
 
     @property
@@ -129,23 +136,24 @@ class GameObject:
 
     @is_active.setter
     def is_active(self, value: bool):
+        type_check("is_active", value, bool)
         if Info.is_loop_running:
             if value:
-                Info.instance.AddToActiveGameObjects(self)
-                self.CallOnMonos("on_enabled")
+                Info.instance._add_to_active_game_objects(self)
+                self._call_on_monos("on_enabled")
             else:
-                Info.instance.RemFrActiveGameObjects(self)
-                self.CallOnMonos("on_disabled")
+                Info.instance._rem_from_active_game_objects(self)
+                self._call_on_monos("on_disabled")
             self.__is_active = value
         else:
             self.__activate_on_start = value
 
         if value:
             for child in self.__transform:
-                child.gameobject.PARENT_ACTIVATED()
+                child.gameobject._parent_activated()
         else:
             for child in self.__transform:
-                child.gameobject.PARENT_DEACTIVATED()
+                child.gameobject._parent_deactivated()
 
     def get_component(self, _t: type):
         self.__Storage.get_component(_t)
@@ -153,34 +161,36 @@ class GameObject:
     def get_all_components(self, _t: type):
         return self.__Storage.get_all_components(_t)
 
-    def add_component(self, _type: type) -> MonoBehaviour or RendererBaseAnot:
-        if not issubclass(_type, MonoBehaviour) and not issubclass(_type, ColliderBase):
-            raise InvalidComponentError(f"The given class ({_type}) doesn't inherit from MonoBehaviour")
+    def add_component(self, _type: type) -> MonoAnot or RendererBaseAnot:
+        if not issubclass(_type, mod_mono.MonoBehaviour) and not issubclass(_type, ColliderBase):
+            raise InvalidComponentException(f"The given class ({_type}) doesn't inherit from MonoBehaviour")
 
+        decorators.__IS_HIDDEN__ = False
         comp = _type(self)
+        decorators.__IS_HIDDEN__ = True
 
         if _type is RigidBody:
             if self.__rb is not None:
-                raise MultiRigidbodyError(f"Gamobject {self.name} already has a rigidbody")
+                raise MultiRigidbodyException(f"Gamobject {self.name} already has a rigidbody")
 
             self.__rb = comp
-            Info.instance.AddToRBs(comp)
+            Info.instance._add_to_rbs(comp)
 
         if not issubclass(_type, ColliderBase):
             self.__Storage.add_to_all(comp)
-            if Info.has_been_runned: comp.OnGameStartMono()
+            if Info.has_been_runned: comp._on_game_start_mono()
         else:
-            Info.instance.AddToActiveColliders(comp)
+            Info.instance._add_to_active_colliders(comp)
         return comp
 
     def destroy(self):
         if not self.__is_active: return
         Info.instance.RemFrGameObjects(self)
         self.__is_active = False
-        for mono in self.__Storage.LoopAll():
+        for mono in self.__Storage.loop_all():
             if not mono.enabled: continue
             mono.remove()
-            mono.Call("on_destroy")
+            mono._call("on_destroy")
         del self
 
     def start_coroutine(self, iter: typing.Generator[WaitFor, None, None]):

@@ -1,8 +1,8 @@
 from __future__ import annotations
-
+from MiniGames.Utils.type_checker import types_check
 from typing import TYPE_CHECKING
-from MiniGames import Vector2
 from MiniGames.Physics.collider_base import ColliderBase
+from MiniGames.Utils.vector2 import Vector2
 from MiniGames.Utils.settings_and_info import Settings
 from MiniGames.Renderers.collider_renderer import ColliderRenderer
 from MiniGames.Renderers.shapes import ShapeBox
@@ -17,7 +17,7 @@ class BoxCollider(ColliderBase):
         self.__center_off = Vector2.zero()
         self.__shape = ShapeBox(Vector2.one(), Settings.colliders_thickness)
         self.__renderer = ColliderRenderer(self, self.__shape, self.transform)
-        go.AddTo("hidden_rend", self.__renderer)
+        go._set_to("hidden_rend", self.__renderer)
 
     @property
     def center_offset(self) -> Vector2:
@@ -25,8 +25,9 @@ class BoxCollider(ColliderBase):
 
     @center_offset.setter
     def center_offset(self, value: Vector2):
+        types_check("center_offset", value, Vector2)
         self.__center_off = value
-        self.__shape.RecalculateScale()
+        self.__shape._recalculate_scale()
 
     @property
     def size(self) -> Vector2:
@@ -34,6 +35,7 @@ class BoxCollider(ColliderBase):
 
     @size.setter
     def size(self, value: Vector2):
+        types_check("size", value, Vector2)
         self.__shape.size = value
 
     def get_center_offset(self) -> Vector2:
@@ -45,6 +47,7 @@ class BoxCollider(ColliderBase):
         return off + trans.position
 
     def furthest_point(self, direction: Vector2) -> Vector2:
+        types_check("direction", direction, Vector2)
         trans = self.transform
         rot = trans.rotation
         scale = trans.lossy_scale

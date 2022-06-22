@@ -1,8 +1,11 @@
 from __future__ import annotations
+from MiniGames.Utils.type_checker import type_check, types_check, type_check_num
+
 from MiniGames.Utils.color import Color
 from MiniGames.Utils import vector2 as mod_v2
 from MiniGames.Pipeline import camera as mod_cam
 from typing import TYPE_CHECKING
+from MiniGames.Utils import decorators
 
 if TYPE_CHECKING:
     from MiniGames.Utils.vector2 import Vector2 as Vector2Anot
@@ -10,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class SettingsClass:
+    @decorators.inner_method
+    def __init__(self): pass
     @property
     def active_camera(self):
         return mod_cam.Camera.active()
@@ -20,6 +25,7 @@ class SettingsClass:
 
     @background_color.setter
     def background_color(self, value: Color):
+        types_check("background_color", value, Color)
         global __background_color__
         __background_color__ = value
 
@@ -29,6 +35,7 @@ class SettingsClass:
 
     @grid_color.setter
     def grid_color(self, value: Color):
+        types_check("grid_color", value, Color)
         global __grid_color__
         __grid_color__ = value
 
@@ -38,6 +45,7 @@ class SettingsClass:
 
     @x_axis_color.setter
     def x_axis_color(self, value: Color):
+        types_check("x_axis_color", value, Color)
         global __x_axis_color__
         __x_axis_color__ = value
 
@@ -47,6 +55,7 @@ class SettingsClass:
 
     @y_axis_color.setter
     def y_axis_color(self, value: Color):
+        types_check("y_axis_color", value, Color)
         global __y_axis_color__
         __y_axis_color__ = value
 
@@ -56,6 +65,7 @@ class SettingsClass:
 
     @collision_threads_count.setter
     def collision_threads_count(self, value: int):
+        type_check("collision_threads_count", value, int)
         global __collision_threads__
         __collision_threads__ = value
 
@@ -65,6 +75,7 @@ class SettingsClass:
 
     @half_screen_width.setter
     def half_screen_width(self, value: int):
+        type_check("half_screen_width", value, int)
         if Info.instance is None: raise PermissionError("Cannot change screen size, once the game is running")
         global __HSW__
         __HSW__ = value
@@ -75,6 +86,7 @@ class SettingsClass:
 
     @half_screen_height.setter
     def half_screen_height(self, value: float):
+        type_check_num("half_screen_height", value)
         if Info.instance is None: raise PermissionError("Cannot change screen size, once the game is running")
         global __HSH__
         __HSH__ = value
@@ -85,6 +97,7 @@ class SettingsClass:
 
     @screen_width.setter
     def screen_width(self, value: float):
+        type_check_num("screen_width", value)
         if Info.instance is None: raise PermissionError("Cannot change screen size, once the game is running")
         global __HSW__
         __HSW__ = value / 2
@@ -95,6 +108,7 @@ class SettingsClass:
 
     @screen_height.setter
     def screen_height(self, value: float):
+        type_check_num("screen_height", value)
         if Info.instance is None: raise PermissionError("Cannot change screen size, once the game is running")
         global __HSH__
         __HSH__ = value / 2
@@ -105,9 +119,7 @@ class SettingsClass:
 
     @screen_size_pixels.setter
     def screen_size_pixels(self, value: Vector2Anot):
-        if type(value) is not mod_v2.Vector2: raise ValueError(
-            f"Invalid value type for Screen Size, expected 'Vector2' got \'{type(value).__qualname__}\'")
-
+        types_check("screen_size_pixels", value, mod_v2.Vector2)
         global __HSW__, __HSH__
         __HSW__, __HSH__ = int(value.x / 2), int(value.y / 2)
 
@@ -117,6 +129,7 @@ class SettingsClass:
 
     @screen_size.setter
     def screen_size(self, value: Vector2Anot):
+        types_check("screen_size", value, Vector2Anot)
         self.screen_size_pixels = value * __space_scale__
 
     @property
@@ -125,6 +138,7 @@ class SettingsClass:
 
     @half_screen_size.setter
     def half_screen_size(self, value: Vector2Anot):
+        types_check("half_screen_size", value, Vector2Anot)
         if type(value) is not mod_v2.Vector2: raise ValueError(
             f"Invalid value type for Screen Size, expected 'Vector2' got \'{type(value).__qualname__}\'")
         global __HSW__, __HSH__
@@ -136,10 +150,11 @@ class SettingsClass:
 
     @space_scale.setter
     def space_scale(self, value: Vector2Anot):
+        types_check("space_scale", value, mod_v2.Vector2)
         if Info.is_loop_running:
             raise PermissionError("Cannot change space scale while game is running")
         global __space_scale__
-        __space_scale__ = value.FIX_SELF()
+        __space_scale__ = value._fix_self()
 
     @property
     def draw_colliders(self) -> bool:
@@ -147,6 +162,7 @@ class SettingsClass:
 
     @draw_colliders.setter
     def draw_colliders(self, value: bool):
+        type_check("draw_colliders", value, bool)
         global __draw_colliders__
         __draw_colliders__ = value
 
@@ -156,6 +172,7 @@ class SettingsClass:
 
     @colliders_thickness.setter
     def colliders_thickness(self, value: float):
+        type_check_num("colliders_thickness", value)
         if Info.is_loop_running:
             raise PermissionError("Cannot change collider thickness while game is running")
         global __colliders_thickness__
@@ -167,6 +184,7 @@ class SettingsClass:
 
     @colliders_color.setter
     def colliders_color(self, value: Color):
+        types_check("colliders_color", value, Color)
         if Info.is_loop_running:
             raise PermissionError("Cannot change collider color while game is running")
         global __colliders_color__
@@ -178,6 +196,7 @@ class SettingsClass:
 
     @gravity.setter
     def gravity(self, value: Vector2Anot):
+        types_check("gravity", value, mod_v2.Vector2)
         global __gravity__
         __gravity__ = value
 
@@ -187,6 +206,7 @@ class SettingsClass:
 
     @frame_rate.setter
     def frame_rate(self, value: int):
+        type_check("frame_rate", value, int)
         global __frame_rate__
         __frame_rate__ = value
 
@@ -196,11 +216,15 @@ class SettingsClass:
 
     @draw_grid.setter
     def draw_grid(self, value: bool):
+        type_check("draw_grid", value, bool)
         global __draw_grid__
         __draw_grid__ = value
 
 
 class InfoClass:
+    @decorators.inner_method
+    def __init__(self): pass
+
     @property
     def instance(self) -> ApplicationAnot: return __instance__
 
@@ -213,7 +237,7 @@ class InfoClass:
     @property
     def time(self) -> float: return __time__
 
-    def UPDATE_TIME(self):
+    def _update_time(self):
         global __time__, __deltaTime__
         __time__ += __deltaTime__
 
@@ -236,7 +260,7 @@ __space_scale__ = mod_v2.Vector2(100, 100)  # How many pixels equal one unit
 __draw_grid__ = True
 __collision_threads__ = 1
 __draw_colliders__ = True
-__colliders_color__ = Color.Collider_Green()
+__colliders_color__ = Color.collider_green()
 __colliders_thickness__ = 1
 __grid_color__ = Color(43, 43, 43)
 __x_axis_color__ = Color(83, 135, 62)
@@ -247,8 +271,10 @@ __fixedDeltaTime__ = 0
 __deltaTime__ = 0
 __time__ = 0
 
+decorators.__IS_HIDDEN__ = False
 Settings = SettingsClass()
 Info = InfoClass()
+decorators.__IS_HIDDEN__ = True
 
 """
 Info:

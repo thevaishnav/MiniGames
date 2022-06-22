@@ -1,4 +1,6 @@
 from __future__ import annotations
+from MiniGames.Utils.type_checker import type_check, types_check, type_check_num
+
 import math
 import random
 import numpy as np
@@ -7,6 +9,8 @@ from MiniGames.Utils import settings_and_info as mod_sai
 
 class Vector2:
     def __init__(self, x: float = 0, y: float = 0):
+        type_check_num("x", x)
+        type_check_num("y", y)
         self.__X = round(x, 5)
         self.__Y = round(y, 5)
         self.__allow_modification = True
@@ -23,9 +27,6 @@ class Vector2:
 
     def __str__(self):
         return f"({self.x}, {self.y})"
-
-    def __call__(self) -> tuple[float, float]:
-        return self.__X, self.__Y
 
     def __add__(self, other: float | Vector2):
         if type(other) is Vector2: return Vector2(self.x + other.x, self.y + other.y)
@@ -128,7 +129,7 @@ class Vector2:
             return Vector2(other.x // self.x, other.y // self.y)
         raise TypeError(f"unsupported operand type(s) for //: {type(other)} and 'Vector2'")
 
-    def FIX_SELF(self):
+    def _fix_self(self):
         self.__allow_modification = False
         return self
 
@@ -138,6 +139,7 @@ class Vector2:
 
     @x.setter
     def x(self, value: float):
+        type_check_num("x", value)
         if not self.__allow_modification:
             raise PermissionError("You are not allowed to change the value of X")
         self.__X = value
@@ -156,6 +158,7 @@ class Vector2:
 
     @y.setter
     def y(self, value: float):
+        type_check_num("y", value)
         if not self.__allow_modification: raise PermissionError("You are not allowed to change the value of Y")
         self.__Y = value
 
@@ -169,6 +172,7 @@ class Vector2:
 
     @magnitude.setter
     def magnitude(self, val: float):
+        type_check_num("val", val)
         if self.magnitude == 0: return
         m = val / self.magnitude
         self.x *= m
@@ -206,21 +210,24 @@ class Vector2:
 
     @staticmethod
     def triple_product(u: Vector2, v: Vector2, w: Vector2):
-        """
-        :return: (v1 x v2) x v3 == v1 x (v2 x v3)
-        """
+        types_check("u", u, Vector2)
+        types_check("v", v, Vector2)
+        types_check("w", w, Vector2)
         return v * u.dot(w) - w * u.dot(v)
 
     @staticmethod
     def direction_vector(angle: float):
+        type_check_num("angle", angle)
         a = math.radians(angle)
         return Vector2(round(math.sin(a), 3), round(math.cos(a), 3))
 
     def set_self(self, to_set: Vector2):
+        types_check("to_set", to_set, Vector2)
         self.__X = to_set.x
         self.__Y = to_set.y
 
     def rotate_self(self, angle: float):
+        type_check_num("angle", angle)
         cos = math.cos(math.radians(angle))
         sin = math.sin(math.radians(angle))
         newX = cos * self.x - sin * self.y
@@ -228,10 +235,15 @@ class Vector2:
         self.x, self.y = newX, newY
 
     def scale_self(self, factor: float):
+        type_check_num("factor", factor)
         self.__X *= factor
         self.__Y *= factor
 
     def offset(self, pos_off: Vector2, scale_off: Vector2, rot_off: float, do_space_scaling: bool = False):
+        types_check("pos_off", pos_off, Vector2)
+        types_check("scale_off", scale_off, Vector2)
+        type_check_num("rot_off", rot_off)
+        type_check("do_space_scaling", do_space_scaling, bool)
         if do_space_scaling:
             vec = self * mod_sai.Settings.space_scale
         else:
@@ -242,6 +254,10 @@ class Vector2:
         return vec
 
     def offset_reverse(self, pos_off: Vector2, scale_off: Vector2, rot_off: float, do_space_scaling: bool = False):
+        types_check("pos_off", pos_off, Vector2)
+        types_check("scale_off", scale_off, Vector2)
+        type_check_num("rot_off", rot_off)
+        type_check("do_space_scaling", do_space_scaling, bool)
         vec = self - pos_off  # pos
         vec.__X /= scale_off.__X  # scale,
         vec.__Y /= scale_off.__Y  # scale,
@@ -272,14 +288,17 @@ class Vector2:
         return Vector2(self.x * mag, self.y * mag)
 
     def reflected(self, reflect_on: Vector2) -> Vector2:
+        types_check("reflect_on", reflect_on, Vector2)
         n = reflect_on.normalized()
         dot = (self * n)
         return self - (dot * 2) * n
 
     def dot(self, other: Vector2) -> float:
+        types_check("other", other, Vector2)
         return self.x * other.x + self.y * other.y
 
     def rotate(self, angle: float) -> Vector2:
+        type_check_num("angle", angle)
         cos = math.cos(math.radians(angle))
         sin = math.sin(math.radians(angle))
         # print(f'cos({angle}) = {cos}, sin({angle}) = {sin}')
@@ -288,14 +307,17 @@ class Vector2:
         return Vector2(newX, newY)
 
     def project_on(self, other: Vector2) -> Vector2:
+        types_check("other", other, Vector2)
         normy = other.normalized()
         dot = self.dot(normy)
         return Vector2(dot * normy.x, dot * normy.y)
 
     def sqr_dist_from(self, other: Vector2) -> float:
+        types_check("other", other, Vector2)
         return (other.x - self.x) ** 2 + (other.y - self.y) ** 2
 
     def dist_from(self, other: Vector2) -> float:
+        types_check("other", other, Vector2)
         return math.sqrt((other.x - self.x) ** 2 + (other.y - self.y) ** 2)
 
     def copy(self) -> Vector2:

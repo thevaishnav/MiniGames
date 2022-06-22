@@ -1,3 +1,5 @@
+from MiniGames.Utils.type_checker import type_check, types_check
+
 from MiniGames.Utils.vector2 import Vector2
 from MiniGames.Pipeline.transform import __U2P__Point__, __P2U__Point__
 from MiniGames.Pipeline.camera import Camera
@@ -17,6 +19,7 @@ class LineRenderer(RendererBase):
 
     @pos_count.setter
     def pos_count(self, value: int):
+        type_check("pos_count", value, int)
         self.__pos_count = value
         lp = len(self.__py_pos)
         if value > lp:
@@ -28,24 +31,27 @@ class LineRenderer(RendererBase):
                 self.__py_pos.pop(i)
 
     def set_position(self, index: int, position: Vector2):
+        type_check("index", index, int)
+        types_check("position", position, Vector2)
         if index >= self.__pos_count:
             raise IndexError(f"Index index > pos_count ({index} > {self.__pos_count})")
         self.__py_pos[index] = __U2P__Point__(position)
 
     def get_position(self, index: int):
+        type_check("index", index, int)
         if index >= self.__pos_count:
             raise IndexError(f"Index index > pos_count ({index} > {self.__pos_count})")
         return __P2U__Point__(self.__py_pos[index])
 
-    def RecalculateRot(self):
+    def _recalculate_rot(self):
         pass
 
-    def RecalculateScale(self):
+    def _recalculate_scale(self):
         pass
 
-    def RecalculatePos(self):
+    def _recalculate_pos(self):
         pass
 
-    def Render(self):
+    def _render(self):
         for i in range(self.__pos_count - 1):
-            Camera.draw_line(self.__py_pos[i], self.__py_pos[i + 1], self.color)
+            Camera._draw_line(self.__py_pos[i], self.__py_pos[i + 1], self.color)
